@@ -1,0 +1,142 @@
+---
+author: "Metodiev Martin"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteIndexEntry{univmixtures}
+  %\usepackage[UTF-8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(mvtnorm)
+```
+
+## Modelling the data
+
+In this example, the correlation matrix of the data is a linear combination
+of the following covariates:
+
+1. The intercept
+
+```{r intercept}
+intercept = matrix(1,ncol=4,nrow=4)
+corrplot::corrplot(intercept,method = "square")
+mtext("intercept", side = 2, line = 0, cex = 1)
+```
+2. X1
+
+```{r X1}
+X1 = rbind(c(1,1,1,0),c(1,1,1,0),c(1,1,1,0),c(0,0,0,1))
+corrplot::corrplot(X1,method = "square")
+mtext("X1", side = 2, line = 0, cex = 1)
+```
+2. X2
+
+```{r X2}
+X2 = rbind(c(1,0,0,0),c(0,1,1,1),c(0,1,1,1),c(0,1,1,1))
+corrplot::corrplot(X2,method = "square")
+mtext("X2", side = 2, line = 0, cex = 1)
+```
+
+3. The interaction between X1 and X2
+
+```{r interaction}
+corrplot::corrplot(X2*X1,method = "square")
+mtext("interaction between X1 and X2", side = 2, line = 0, cex = 1)
+```
+Let's combine all these covariates into a list.
+
+```{r covariate list}
+covar_mats = list(intercept=intercept,X1=X1,X2=X2)
+```
+
+4. There is also a spatial effect, which has the following adjacency matrix:
+
+```{r spatial}
+adj_matrix = rbind(c(0,1,0,0),c(1,0,0,0),c(0,0,0,1),c(0,0,1,0))
+corrplot::corrplot(adj_matrix,method = "square")
+mtext("adjacency matrix", side = 2, line = 0, cex = 1)
+```
+
+## Preparing the data
+
+We simulate data from the standard normal distribution:
+
+```{r load data}
+mean = rep(0,4)
+sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
+diag(sigma) = 1
+num_observations = 100
+dataset = mvtnorm::rmvnorm(num_observations,mean=mean,sigma=sigma)
+```
+
+The correlation matrix of this distribution is a weighted sum of the covariates:
+
+```{r show sigma}
+corrplot::corrplot(sigma,method = "square")
+mtext("correlation matrix", side = 2, line = 0, cex = 1)
+```
+
+## Computing the WSCE, SCE and IVE
+
+The SCE estimates the linear coefficients of the covariates to estimate the
+correlation matrix. Notice how the squares representing different covariates 
+have different sizes and colors.
+
+```{r compute sce}
+sce = scov::scov(covar_mats, adj_matrix, dataset, 
+                 interaction_effects=list(c("X1","X2")))
+corrplot::corrplot(sce$corrmat_estim,method = "square")
+mtext("SCE", side = 2, line = 0, cex = 1)
+```
+
+Suppose that one suspects that the data does not follow a normal distribution.
+In that case, one should use our semiparamteric estimator, the IVE.
+
+Let's initialize the data from a different distribution,
+
+```{r initialize non-normal data}
+dataset = mvtnorm::rmvt(num_observations,sigma=sigma,df=2) + matrix(runif(4*num_observations,max=10001,min=10000),nrow=num_observations,ncol=4)
+```
+
+and compute the IVE:
+
+```{r compute ive}
+ive = scov::scov(covar_mats, adj_matrix, dataset, 
+                 interaction_effects=list(c("X1","X2")),
+                 semiparametric=TRUE)
+corrplot::corrplot(ive$corrmat_estim,method = "square")
+mtext("IVE", side = 2, line = 0, cex = 1)
+```
+One might also be worried about the model not being specified correctly.
+For example, one of the covariates could be unknown. In this case, one should
+use the WSCE.
+
+Let us, e.g., suppose that we do not know that interactions are present. Let
+us simulate the data from the same normal distribution,
+
+```{r load data 2}
+mean = rep(0,4)
+sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
+diag(sigma) = 1
+dataset = mvtnorm::rmvnorm(num_observations,mean=mean,sigma=sigma)
+```
+
+but compute the WSCE without X2 (NOTE: a lot faster if parallelize=TRUE):
+
+```{r compute wsce}
+covar_mats = list(intercept=intercept,X1=X1)
+wsce = scov::scov(list(X1=X1), adj_matrix, dataset,
+                  misspecification = TRUE,
+                  parallelize = FALSE)
+corrplot::corrplot(wsce$corrmat_estim,method = "square")
+mtext("WSCE", side = 2, line = 0, cex = 1)
+```
+Notice that the parameter lambda is far away from 1, indicating
+that the model is misspecified.
+
+```{r show lambda}
+paste0("lambda: ",wsce$lambda)
+```

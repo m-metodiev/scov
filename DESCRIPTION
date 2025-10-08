@@ -1,0 +1,36 @@
+Package: scov
+Type: Package
+Title: Structured Covariances Estimators for Pairwise and Spatial Covariates
+Version: 0.1.0
+Authors@R: 
+    c(person(given = "Martin",
+    family = "Metodiev",
+    role = c("aut","cre","cph"),
+    email = "m.metodiev@tutanota.com",
+    comment = c(ORCID = "0009-0000-9432-3756")),
+    person(given = "Marie",
+    family = "Perrot-Dockès",
+    role = "aut",
+    email = "marie.perrot-dockees@parisdescartes.fr"),
+    person(given = "Stéphane",
+    family = "Robin",
+    role = "aut",
+    email = "stephane.robin@sorbonne-universite.fr"))
+Description: Implements estimators for structured covariance matrices in the
+    presence of pairwise and spatial covariates.
+    Metodiev, Perrot-Dockès, Ouadah, Fosdick, Robin, Latouche & Raftery (2025)
+    <doi:10.48550/arXiv.2411.04520>.
+License: GPL (>= 3)
+Encoding: UTF-8
+RoxygenNote: 7.3.2
+Imports: 
+    Matrix,
+    missMDA,
+    mvtnorm,
+    ohenery,
+    pracma,
+    quadprog,
+    withr,
+    purrr
+VignetteBuilder: knitr
+Suggests: knitr, markdown, corrplot
