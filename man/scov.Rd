@@ -20,7 +20,8 @@ scov(
   num_bootstrap_iters = 100,
   semiparametric = FALSE,
   misspecification = FALSE,
-  seed = 0
+  seed = 0,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -55,6 +56,8 @@ scov(
 \item{misspecification}{computes the WSCE if TRUE, the WSCE else}
 
 \item{seed}{a seed (can't be set to NULL)}
+
+\item{verbose}{prints progress if TRUE}
 }
 \value{
 Returns a named list with the following elements:
@@ -82,7 +85,9 @@ mean = rep(0,4)
 sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
 diag(sigma) = 1
 dataset = mvtnorm::rmvnorm(1000,mean=mean,sigma=sigma)
-scov(covar_mats, adj_matrix, dataset, interaction_effects=list(c("X1","X2")))
+scov(covar_mats, adj_matrix, dataset,
+interaction_effects=list(c("X1","X2")),
+parallelize=FALSE,ncores=1)
 }
 \references{
 Metodiev, M., Perrot-Dockès, M., Ouadah, S., Fosdick, B. K.,

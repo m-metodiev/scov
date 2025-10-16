@@ -14,6 +14,7 @@
 #' @param adj_positions               positions within the adjacency matrix
 #' @param interaction_effects         list of interaction effects
 #' @param init                        the initialization parameter vector
+#' @param verbose                     prints progress if TRUE
 #' @keywords internal
 #' @importFrom stats          sd
 #' @importFrom stats          optim
@@ -35,7 +36,7 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
                dataset, mean_estim = NULL, sd_estim = NULL,
                grid_size=100, parallelize = TRUE, ncores=8,
                adj_positions=1:nrow(adj_matrix), interaction_effects=list(),
-               init=NULL){
+               init=NULL,verbose=TRUE){
 
   if(is.null(init)){
     ive_estim = ive(pairwise_covariate_matrices = pairwise_covariate_matrices,
@@ -114,14 +115,24 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
     interaction_effects=interaction_effects)
 
   logLikInit <- LogLikLogParm(init)
+  if(verbose){
+    fit3 <- try(stats::optim(par=init,
+                             fn=LogLikLogParm,
+                             gr=GradLogLikLogParm,
+                             control=list(fnscale=-1,
+                                          trace=1,
+                                          maxit=500),
+                             method='BFGS'))
+  } else{
+    fit3 <- try(stats::optim(par=init,
+                             fn=LogLikLogParm,
+                             gr=GradLogLikLogParm,
+                             control=list(fnscale=-1,
+                                          trace=0,
+                                          maxit=500),
+                             method='BFGS'))
+  }
 
-  fit3 <- try(stats::optim(par=init,
-                           fn=LogLikLogParm,
-                           gr=GradLogLikLogParm,
-                           control=list(fnscale=-1,
-                                        trace=1,
-                                        maxit=500),
-                           method='BFGS'))
   if(!is.character(fit3[1])){
     SigmaHat3 <- CovMat_03(adj_positions=adj_positions,
                            parm=backward_transform_param(fit3$par),

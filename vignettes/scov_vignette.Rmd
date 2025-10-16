@@ -11,6 +11,7 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(mvtnorm)
+library(scov)
 ```
 
 ## Modelling the data
@@ -87,7 +88,8 @@ have different sizes and colors.
 
 ```{r compute sce}
 sce = scov::scov(covar_mats, adj_matrix, dataset, 
-                 interaction_effects=list(c("X1","X2")))
+                 interaction_effects=list(c("X1","X2")),
+                 ncores=1,parallelize=FALSE,verbose=FALSE)
 corrplot::corrplot(sce$corrmat_estim,method = "square")
 mtext("SCE", side = 2, line = 0, cex = 1)
 ```
@@ -106,7 +108,8 @@ and compute the IVE:
 ```{r compute ive}
 ive = scov::scov(covar_mats, adj_matrix, dataset, 
                  interaction_effects=list(c("X1","X2")),
-                 semiparametric=TRUE)
+                 semiparametric=TRUE,
+                 ncores=1,parallelize=FALSE)
 corrplot::corrplot(ive$corrmat_estim,method = "square")
 mtext("IVE", side = 2, line = 0, cex = 1)
 ```
@@ -124,13 +127,14 @@ diag(sigma) = 1
 dataset = mvtnorm::rmvnorm(num_observations,mean=mean,sigma=sigma)
 ```
 
-but compute the WSCE without X2 (NOTE: a lot faster if parallelize=TRUE):
+but compute the WSCE without X2 (NOTE: a lot faster if parallelize=TRUE and ncores>1):
 
 ```{r compute wsce}
 covar_mats = list(intercept=intercept,X1=X1)
 wsce = scov::scov(list(X1=X1), adj_matrix, dataset,
                   misspecification = TRUE,
-                  parallelize = FALSE)
+                  parallelize = FALSE,
+                  ncores=1,verbose=FALSE)
 corrplot::corrplot(wsce$corrmat_estim,method = "square")
 mtext("WSCE", side = 2, line = 0, cex = 1)
 ```

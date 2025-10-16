@@ -10,7 +10,7 @@
 #'
 calc_Sigma_opt_frob = function(matList_full, corY, edge_constraints=c()){
   if(length(matList_full)==0){
-    print("ERROR: no matrix found")
+    warning("ERROR: no matrix found")
     return(-1)
   }
 

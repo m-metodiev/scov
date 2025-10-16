@@ -20,6 +20,7 @@
 #' @param semiparametric              computes the IVE if TRUE, the SCE else
 #' @param misspecification            computes the WSCE if TRUE, the WSCE else
 #' @param seed                        a seed (can't be set to NULL)
+#' @param verbose                     prints progress if TRUE
 #'
 #' @returns Returns a named list with the following elements:
 #'
@@ -49,14 +50,17 @@
 #' sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
 #' diag(sigma) = 1
 #' dataset = mvtnorm::rmvnorm(1000,mean=mean,sigma=sigma)
-#' scov(covar_mats, adj_matrix, dataset, interaction_effects=list(c("X1","X2")))
+#' scov(covar_mats, adj_matrix, dataset,
+#' interaction_effects=list(c("X1","X2")),
+#' parallelize=FALSE,ncores=1)
 scov = function(pairwise_covariate_matrices, adj_matrix,
                 dataset, mean_estim = NULL, sd_estim = NULL,
                 grid_size=100, parallelize = FALSE, ncores=8,
                 adj_positions=1:nrow(adj_matrix),
                 interaction_effects=list(), init=NULL,
                 use_bootstrap=FALSE, num_bootstrap_iters=100,
-                semiparametric=FALSE, misspecification=FALSE, seed=0){
+                semiparametric=FALSE, misspecification=FALSE, seed=0,
+                verbose=TRUE){
 
 
   if(!is.null(pairwise_covariate_matrices)){
@@ -102,7 +106,8 @@ scov = function(pairwise_covariate_matrices, adj_matrix,
                         init = init,
                         use_bootstrap=use_bootstrap,
                         num_bootstrap_iters=num_bootstrap_iters,
-                        seed=seed)
+                        seed=seed,
+                        verbose=verbose)
       return(wsce_estim)
     } else{
       sce_estim = sce(pairwise_covariate_matrices=pairwise_covariate_matrices,
@@ -113,7 +118,8 @@ scov = function(pairwise_covariate_matrices, adj_matrix,
                       adj_positions = adj_positions,
                       init = init,
                       interaction_effects=interaction_effects,
-                      parallelize = parallelize)
+                      parallelize = parallelize,
+                      verbose=verbose)
       return(sce_estim)
     }
   }

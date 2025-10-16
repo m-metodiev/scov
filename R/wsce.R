@@ -18,6 +18,7 @@
 #' @param use_bootstrap               uses bootstrapping if TRUE
 #' @param num_bootstrap_iters         number of bootstrap simulations
 #' @param seed                        a seed
+#' @param verbose                     prints progress if TRUE
 #'
 #' @returns Returns a named list with the following elements:
 #'
@@ -50,7 +51,7 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
                 adj_positions=1:nrow(adj_matrix),
                 interaction_effects=list(), init=NULL,
                 sce_init=NULL, use_bootstrap=FALSE, num_bootstrap_iters=100,
-                seed=0){
+                seed=0, verbose=TRUE){
 
   num_observations = nrow(dataset)
   if(!is.null(pairwise_covariate_matrices)){
@@ -61,33 +62,30 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
 
   if(sum(is.na(dataset))==0){
     if(is.null(mean_estim)){
+      use_bootstrap = TRUE # bootstrap is always used if the mean is estimated
       mean_estim = colMeans(dataset)
     }
     if(is.null(sd_estim)){
+      use_bootstrap = TRUE # bootstrap is always used if the sd is estimated
       sd_estim = apply(dataset,2,stats::sd)
     }
-
-    if(is.null(mean_estim)&is.null(sd_estim)){
-      varepsilon = dataset
-      pearson_mat = stats::cor(dataset)
-    } else{
-      varepsilon = dataset
-      varepsilon = (varepsilon - t(matrix(rep(mean_estim,num_observations),
-                                          ncol=num_observations)))%*%
-        diag(1/sd_estim)
-      pearson_mat = cor_from_standard_errors(varepsilon)
-    }
+    varepsilon = dataset
+    varepsilon = (varepsilon - t(matrix(rep(mean_estim,num_observations),
+                                        ncol=num_observations)))%*%
+      diag(1/sd_estim)
+    pearson_mat = cor_from_standard_errors(varepsilon)
   } else{
     if(is.null(mean_estim)){
+      use_bootstrap = TRUE # bootstrap is always used if the mean is estimated
       mean_estim = apply(dataset,2,function(x) mean(x[!is.na(x)]))
     }
     if(is.null(sd_estim)){
+      use_bootstrap = TRUE # bootstrap is always used if the sd is estimated
       sd_estim = apply(dataset,2,function(x) stats::sd(x[!is.na(x)]))
     }
     if(is.null(adj_matrix)){
       length_parm = length(pairwise_covariate_matrices)
     } else{
-
       # accounting for the two spatial variables
       length_parm = length(pairwise_covariate_matrices) + 2
     }
@@ -123,7 +121,8 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
                     adj_positions = adj_positions,
                     init = init,
                     interaction_effects = interaction_effects,
-                    parallelize = parallelize)
+                    parallelize = parallelize,
+                    verbose=verbose)
     sce_init = sce_estim$parm
   }
 
@@ -177,20 +176,22 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
         perc = round((s / num_bootstrap_iters) * 100)
 
         # make sure it is divisable by 10
-        num_rounded = num_bootstrap_iters - (num_bootstrap_iters %% 10)
-        if(num_rounded == 0){
-          system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
-        } else{
-          if(s==1){
+        if(verbose){
+          num_rounded = num_bootstrap_iters - (num_bootstrap_iters %% 10)
+          if(num_rounded == 0){
             system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
-          }
-          if(((s / num_bootstrap_iters) * 10) ==
-             round((s / num_bootstrap_iters) * 10)){
-            system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
+          } else{
+            if(s==1){
+              system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
+            }
+            if(((s / num_bootstrap_iters) * 10) ==
+               round((s / num_bootstrap_iters) * 10)){
+              system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
+            }
           }
         }
 
-        # set.seed(s+seed) # ensures replicability
+        # ensures replicability
         test_data = withr::with_seed(seed=s+seed,
                                      mvtnorm::rmvnorm(num_observations,
                                                       sigma=pearson_mat))
@@ -227,10 +228,11 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
       }
 
       pearson_mat=as.matrix(pearson_mat)
-      print("loading ...", quote=FALSE)
+      if(verbose){
+        message("loading ...", quote=FALSE)
+      }
       if(parallelize){
         cores=detectCores()
-
         bootstrap_sample = parallel::mclapply(1:num_bootstrap_iters,
                                               FUN=function(s) test_func(s),
                                               mc.cores=min(cores[1]-1,ncores))

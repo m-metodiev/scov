@@ -9,6 +9,7 @@ combined_matList = function(matList,
                             interaction_effects=NULL,
                             check_redundancy=FALSE){
   matList_full = c(matList$Fk,matList$Gl)
+
   for(i in seq_along(matList_full)){
     matList_full[[i]] = as.matrix(matList_full[[i]])
   }
@@ -17,6 +18,30 @@ combined_matList = function(matList,
     matList_full_names = c(names(matList$Fk),"spatial")
   } else{
     matList_full_names = names(matList$Fk)
+  }
+
+
+  # add names of the matrices
+  if(!is.null(matList$Gl)){
+    base_effects = c(names(matList$Fk),"spatial")
+  } else{
+    base_effects = names(matList$Fk)
+  }
+
+  if(check_redundancy){
+    not_redundant = (Matrix::rankMatrix(sapply(matList_full,
+                                               function(x) c(x)))[1] -
+                       length(matList_full)) == 0
+    if(!not_redundant){
+      qr_decomp = qr(sapply(matList_full, function(x) c(x)))
+      warning("Redundant effects have been found.")
+      warning("The following effects are not redundant:")
+      warning(paste0(base_effects[qr_decomp$pivot[1:qr_decomp$rank]],
+                     collapse=","))
+      warning("Please use them and start over.")
+    }
+  } else{
+    not_redundant = TRUE
   }
 
   counter = length(matList_full)
@@ -28,7 +53,6 @@ combined_matList = function(matList,
     #calculate all possible Hadamard-products; Exclude global effect matrix
     for(i in sequence){
       for(j in sequence[-(1:i)]){
-        #browser()
         matprod = matList_full[[i]] * matList_full[[j]]
         if(check_redundancy){
           not_redundant = (Matrix::rankMatrix(sapply(c(matList_full,
@@ -67,12 +91,6 @@ combined_matList = function(matList,
     }
   }
 
-  # add names of the matrices
-  if(!is.null(matList$Gl)){
-    base_effects = c(names(matList$Fk),"spatial")
-  } else{
-    base_effects = names(matList$Fk)
-  }
   effects = base_effects
   for(matrix_pair in matrix_pairs){
     effects[length(effects)+1] = paste0(base_effects[matrix_pair[1]],
@@ -82,14 +100,14 @@ combined_matList = function(matList,
   names(matList_full) = effects
   if(found_redundant_pairs){
     if(length(effects) == length(base_effects)){
-      print("The interaction effects are redundant.")
-      print("Please remove them and restart.")
+      warning("The interaction effects are redundant.")
+      warning("Please remove them and restart.")
     } else{
-      print("Redundant effect pairs have been found.")
-      print("The following pairs are not redundant:")
-      print(paste0(effects[(length(base_effects)+1):length(effects)]),
+      warning("Redundant effect pairs have been found.")
+      warning("The following pairs are not redundant:")
+      warning(paste0(effects[(length(base_effects)+1):length(effects)]),
             quote=FALSE)
-      print("Please use these effect pairs as input and start over.")
+      warning("Please use these effect pairs as input and start over.")
     }
     return(-1)
   } else{

@@ -15,7 +15,8 @@ sce(
   ncores = 8,
   adj_positions = 1:nrow(adj_matrix),
   interaction_effects = list(),
-  init = NULL
+  init = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ sce(
 \item{interaction_effects}{list of interaction effects}
 
 \item{init}{the initialization parameter vector}
+
+\item{verbose}{prints progress if TRUE}
 }
 \value{
 Returns a named list with the following elements:

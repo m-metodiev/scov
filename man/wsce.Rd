@@ -19,7 +19,8 @@ wsce(
   sce_init = NULL,
   use_bootstrap = FALSE,
   num_bootstrap_iters = 100,
-  seed = 0
+  seed = 0,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ wsce(
 \item{num_bootstrap_iters}{number of bootstrap simulations}
 
 \item{seed}{a seed}
+
+\item{verbose}{prints progress if TRUE}
 }
 \value{
 Returns a named list with the following elements:
