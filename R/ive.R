@@ -37,18 +37,18 @@ ive = function(pairwise_covariate_matrices=NULL, adj_matrix=NULL,
                adj_positions=1:nrow(adj_matrix), interaction_effects = list()){
 
   if(is.null(pairwise_covariate_matrices)&is.null(adj_matrix)){
-    print("ERROR: (pairwise_covariate_matrices, adj_matrix) both NULL!")
+    warning("ERROR: (pairwise_covariate_matrices, adj_matrix) both NULL!")
     return(-1)
   }
 
   if(!is.null(pairwise_covariate_matrices)){
     if("spatial" %in% names(pairwise_covariate_matrices)){
-      print("ERROR: Please use another name than - spatial - for the covariates.")
+      warning("ERROR: Please use another name than - spatial - for the covariates.")
       return(-1)
     }
 
     if("beta" %in% names(pairwise_covariate_matrices)){
-      print("ERROR: Please use another name than - beta - for the covariates.")
+      warning("ERROR: Please use another name than - beta - for the covariates.")
       return(-1)
     }
 
