@@ -5,12 +5,25 @@
 #' @param matList             the list of matrices (pairwise + spatial)
 #' @param dataset             an n (observations) x d (dimension) matrix
 #' @param interaction_effects list of interaction effects (vectors of names)
+#' @param joint_estimation    estimates everything jointly if TRUE,
+#'                            uses a 2 step procedure if FALSE
 #'
 #' @returns (a translation of) the loglikelihood
 #' @keywords internal
 LogLikLogParm_02 <- function(adj_positions, logParm, matList, dataset,
-                             interaction_effects=list()){
-  parm = backward_transform_param(logParm)
+                             interaction_effects=list(),
+                             joint_estimation=FALSE){
+  if(joint_estimation){
+    mus = logParm[1:ncol(dataset)]
+    logsigmas = logParm[(ncol(dataset)+1):(2*ncol(dataset))]
+    sigmas = exp(logsigmas)
+    parm = backward_transform_param(logParm[-(1:(2*ncol(dataset)))])
+  } else{
+    # dataset is already normalized by the first step, so no need for mu, sigma
+    mus = NULL
+    sigmas = NULL
+    parm = backward_transform_param(logParm)
+  }
   if(names(parm)[length(parm)]=="beta"){
     # "Round down" if parameters are too close to the edge
     parm[1:(length(parm)-1)][parm[1:(length(parm)-1)]>=(1-1e-8)] = .99
@@ -35,5 +48,7 @@ LogLikLogParm_02 <- function(adj_positions, logParm, matList, dataset,
                 parm,
                 matList,
                 dataset,
-                interaction_effects=interaction_effects)
+                interaction_effects=interaction_effects,
+                mus=mus,
+                sigmas=sigmas)
 }

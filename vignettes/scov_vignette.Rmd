@@ -87,7 +87,7 @@ correlation matrix. Notice how the squares representing different covariates
 have different sizes and colors.
 
 ```{r compute sce}
-sce = scov::scov(covar_mats, adj_matrix, dataset, 
+sce = scov::scov(covar_mats, dataset, adj_matrix,
                  interaction_effects=list(c("X1","X2")),
                  ncores=1,parallelize=FALSE,verbose=FALSE)
 corrplot::corrplot(sce$corrmat_estim,method = "square")
@@ -106,7 +106,7 @@ dataset = mvtnorm::rmvt(num_observations,sigma=sigma,df=2) + matrix(runif(4*num_
 and compute the IVE:
 
 ```{r compute ive}
-ive = scov::scov(covar_mats, adj_matrix, dataset, 
+ive = scov::scov(covar_mats, dataset, adj_matrix,
                  interaction_effects=list(c("X1","X2")),
                  semiparametric=TRUE,
                  ncores=1,parallelize=FALSE)
@@ -131,7 +131,7 @@ but compute the WSCE without X2 (NOTE: a lot faster if parallelize=TRUE and ncor
 
 ```{r compute wsce}
 covar_mats = list(intercept=intercept,X1=X1)
-wsce = scov::scov(list(X1=X1), adj_matrix, dataset,
+wsce = scov::scov(list(X1=X1), dataset, adj_matrix,
                   misspecification = TRUE,
                   parallelize = FALSE,
                   ncores=1,verbose=FALSE)

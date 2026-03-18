@@ -9,7 +9,8 @@ LogLikLogParm_02(
   logParm,
   matList,
   dataset,
-  interaction_effects = list()
+  interaction_effects = list(),
+  joint_estimation = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,9 @@ LogLikLogParm_02(
 \item{dataset}{an n (observations) x d (dimension) matrix}
 
 \item{interaction_effects}{list of interaction effects (vectors of names)}
+
+\item{joint_estimation}{estimates everything jointly if TRUE,
+uses a 2 step procedure if FALSE}
 }
 \value{
 (a translation of) the loglikelihood

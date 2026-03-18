@@ -5,8 +5,8 @@
 #' Metodiev et al. (2024).
 #'
 #' @param pairwise_covariate_matrices named list of square matrices
-#' @param adj_matrix                  adjacency matrix of the spatial covariate
 #' @param dataset                     the dataset given in matrix form
+#' @param adj_matrix                  adjacency matrix of the spatial covariate
 #' @param mean_estim                  mean vector estimate
 #' @param sd_estim                    standard deviation vector estimate
 #' @param grid_size                   grid-size for spatial effect
@@ -21,6 +21,8 @@
 #' @param misspecification            computes the WSCE if TRUE, the WSCE else
 #' @param seed                        a seed (can't be set to NULL)
 #' @param verbose                     prints progress if TRUE
+#' @param joint_estimation            estimates everything jointly if TRUE,
+#'                                    uses a 2 step procedure if FALSE
 #'
 #' @returns Returns a named list with the following elements:
 #'
@@ -50,17 +52,17 @@
 #' sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
 #' diag(sigma) = 1
 #' dataset = mvtnorm::rmvnorm(1000,mean=mean,sigma=sigma)
-#' scov(covar_mats, adj_matrix, dataset,
+#' scov(covar_mats, dataset, adj_matrix,
 #' interaction_effects=list(c("X1","X2")),
 #' parallelize=FALSE,ncores=1)
-scov = function(pairwise_covariate_matrices, adj_matrix,
-                dataset, mean_estim = NULL, sd_estim = NULL,
+scov = function(pairwise_covariate_matrices, dataset,
+                adj_matrix=NULL, mean_estim = NULL, sd_estim = NULL,
                 grid_size=100, parallelize = FALSE, ncores=8,
                 adj_positions=1:nrow(adj_matrix),
                 interaction_effects=list(), init=NULL,
                 use_bootstrap=FALSE, num_bootstrap_iters=100,
                 semiparametric=FALSE, misspecification=FALSE, seed=0,
-                verbose=TRUE){
+                verbose=TRUE, joint_estimation=FALSE){
 
 
   if(!is.null(pairwise_covariate_matrices)){
@@ -107,7 +109,8 @@ scov = function(pairwise_covariate_matrices, adj_matrix,
                         use_bootstrap=use_bootstrap,
                         num_bootstrap_iters=num_bootstrap_iters,
                         seed=seed,
-                        verbose=verbose)
+                        verbose=verbose,
+                        joint_estimation=joint_estimation)
       return(wsce_estim)
     } else{
       sce_estim = sce(pairwise_covariate_matrices=pairwise_covariate_matrices,
@@ -119,7 +122,8 @@ scov = function(pairwise_covariate_matrices, adj_matrix,
                       init = init,
                       interaction_effects=interaction_effects,
                       parallelize = parallelize,
-                      verbose=verbose)
+                      verbose=verbose,
+                      joint_estimation=joint_estimation)
       return(sce_estim)
     }
   }

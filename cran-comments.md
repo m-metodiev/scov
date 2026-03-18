@@ -2,9 +2,13 @@
 
 0 errors | 0 warnings | 0 note
 
-## Resubmission
-This is a resubmission. In this version I have:
+## New version
+This is a new version. In this version I have:
 
-* replaced print() with warning in every file if possible,
+* replaced mclapply with future_lapply,
 
-* used if(verbose)cat(..) if I really had to write text to the console.
+* allowed the adjacency matrix to be set to NULL,
+
+* changed the order of the arguments in scov,
+
+* implemented the option joint_estimation=TRUE.

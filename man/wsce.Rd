@@ -20,7 +20,8 @@ wsce(
   use_bootstrap = FALSE,
   num_bootstrap_iters = 100,
   seed = 0,
-  verbose = TRUE
+  verbose = TRUE,
+  joint_estimation = FALSE
 )
 }
 \arguments{
@@ -55,6 +56,9 @@ wsce(
 \item{seed}{a seed}
 
 \item{verbose}{prints progress if TRUE}
+
+\item{joint_estimation}{estimates everything jointly if TRUE,
+uses a 2 step procedure if FALSE}
 }
 \value{
 Returns a named list with the following elements:

@@ -3,6 +3,8 @@
 export(scov)
 importFrom(Matrix,nearPD)
 importFrom(Matrix,rankMatrix)
+importFrom(future,plan)
+importFrom(future.apply,future_lapply)
 importFrom(missMDA,imputePCA)
 importFrom(mvtnorm,dmvnorm)
 importFrom(mvtnorm,rmvnorm)

@@ -1,7 +1,8 @@
 Package: scov
 Type: Package
 Title: Structured Covariances Estimators for Pairwise and Spatial Covariates
-Version: 0.1.2
+Version: 2.0.0
+Date: 2026-03-18
 Authors@R: 
     c(person(given = "Martin",
     family = "Metodiev",
@@ -31,6 +32,8 @@ Imports:
     pracma,
     quadprog,
     withr,
-    purrr
+    purrr,
+    future,
+    future.apply
 VignetteBuilder: knitr
 Suggests: knitr, markdown, corrplot

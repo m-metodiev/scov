@@ -19,6 +19,8 @@
 #' @param num_bootstrap_iters         number of bootstrap simulations
 #' @param seed                        a seed
 #' @param verbose                     prints progress if TRUE
+#' @param joint_estimation            estimates everything jointly if TRUE,
+#'                                    uses a 2 step procedure if FALSE
 #'
 #' @returns Returns a named list with the following elements:
 #'
@@ -36,22 +38,19 @@
 #' arXiv preprint arXiv:2411.04520.
 #'
 #' @keywords internal
-#' @importFrom parallel       mclapply
-#' @importFrom stats          cor
+#' @importFrom future         plan
+#' @importFrom future.apply   future_lapply
 #' @importFrom stats          sd
 #' @importFrom missMDA        imputePCA
-#' @importFrom mvtnorm        rmvnorm
-#' @importFrom withr          with_seed
 #' @importFrom stats          cov
 #' @importFrom stats          var
-#' @importFrom purrr          quietly
 wsce = function(pairwise_covariate_matrices, adj_matrix,
                 dataset, mean_estim = NULL, sd_estim = NULL,
                 grid_size=100, parallelize = FALSE, ncores=8,
                 adj_positions=1:nrow(adj_matrix),
                 interaction_effects=list(), init=NULL,
                 sce_init=NULL, use_bootstrap=FALSE, num_bootstrap_iters=100,
-                seed=0, verbose=TRUE){
+                seed=0, verbose=TRUE, joint_estimation=FALSE){
 
   num_observations = nrow(dataset)
   if(!is.null(pairwise_covariate_matrices)){
@@ -122,7 +121,8 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
                     init = init,
                     interaction_effects = interaction_effects,
                     parallelize = parallelize,
-                    verbose=verbose)
+                    verbose=verbose,
+                    joint_estimation=joint_estimation)
     sce_init = sce_estim$parm
   }
 
@@ -171,74 +171,51 @@ wsce = function(pairwise_covariate_matrices, adj_matrix,
   try_again = TRUE
   while(try_again){
     if(sum(is.na(dataset))>0 | use_bootstrap){
-      test_func = function(s){
-
-        perc = round((s / num_bootstrap_iters) * 100)
-
-        # make sure it is divisable by 10
-        if(verbose){
-          num_rounded = num_bootstrap_iters - (num_bootstrap_iters %% 10)
-          if(num_rounded == 0){
-            system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
-          } else{
-            if(s==1){
-              system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
-            }
-            if(((s / num_bootstrap_iters) * 10) ==
-               round((s / num_bootstrap_iters) * 10)){
-              system(sprintf('echo "%s"', paste0(perc," percent", collapse="")))
-            }
-          }
-        }
-
-        # ensures replicability
-        test_data = withr::with_seed(seed=s+seed,
-                                     mvtnorm::rmvnorm(num_observations,
-                                                      sigma=pearson_mat))
-        # ensures replicability
-        # test_data = mvtnorm::rmvnorm(num_observations, sigma=pearson_mat)
-        test_data[is.na(dataset)]=NA
-
-        # impute data if values are missing, use Pearson matrix otherwise
-        if(sum(is.na(dataset))>0){
-          sim_test = list(dataset=test_data,
-                          correlation_matrix=compute_marginal_cor(test_data))
-          pearson_test = cor_from_standard_errors(
-            missMDA::imputePCA(test_data,ncp=length(parm))$completeObs)
-        } else{
-          sim_test =
-            list(dataset=test_data,
-                 correlation_matrix=cor_from_standard_errors(test_data))
-          pearson_test = stats::cor(test_data)
-        }
-
-        compute_noisy =
-          function() sce(pairwise_covariate_matrices, adj_matrix,
-                         test_data, mean_estim = rep(0,dimension),
-                         sd_estim = rep(1,dimension), grid_size=grid_size,
-                         adj_positions=adj_positions,
-                         interaction_effects=interaction_effects,
-                         init=parm)$corrmat_estim
-        compute_quietly = purrr::quietly(compute_noisy)
-        SCE_test = compute_quietly()$result
-
-        return(array(c(SCE_test, pearson_test), dim = c(dimension,
-                                                        dimension,
-                                                        2)))
-      }
 
       pearson_mat=as.matrix(pearson_mat)
       if(verbose){
-        message("loading ...", quote=FALSE)
+        message("loading ...NEW VERSION")
       }
       if(parallelize){
         cores=detectCores()
-        bootstrap_sample = parallel::mclapply(1:num_bootstrap_iters,
-                                              FUN=function(s) test_func(s),
-                                              mc.cores=min(cores[1]-1,ncores))
+        future::plan(future::multisession, workers = min(cores[1]-1,ncores))
+        bootstrap_sample <- future.apply::future_lapply(1:num_bootstrap_iters,
+                                                        FUN=function(s) test_func(s,
+                                                                                  num_bootstrap_iters,
+                                                                                  seed,
+                                                                                  dimension,
+                                                                                  num_observations,
+                                                                                  pearson_mat,
+                                                                                  dataset,
+                                                                                  parm,
+                                                                                  pairwise_covariate_matrices,
+                                                                                  adj_matrix,
+                                                                                  grid_size,
+                                                                                  adj_positions,
+                                                                                  interaction_effects,
+                                                                                  verbose,
+                                                                                  joint_estimation),
+                                                        future.packages = "scov")
+        if(verbose){
+          message("finished loading")
+        }
       } else{
         bootstrap_sample = lapply(1:num_bootstrap_iters,
-                                  FUN=function(s) test_func(s))
+                                  FUN=function(s) test_func(s,
+                                                            num_bootstrap_iters,
+                                                            seed,
+                                                            dimension,
+                                                            num_observations,
+                                                            pearson_mat,
+                                                            dataset,
+                                                            parm,
+                                                            pairwise_covariate_matrices,
+                                                            adj_matrix,
+                                                            grid_size,
+                                                            adj_positions,
+                                                            interaction_effects,
+                                                            verbose,
+                                                            joint_estimation))
       }
       bootstrap_sample = simplify2array(bootstrap_sample)
 

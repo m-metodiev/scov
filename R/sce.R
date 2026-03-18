@@ -15,6 +15,8 @@
 #' @param interaction_effects         list of interaction effects
 #' @param init                        the initialization parameter vector
 #' @param verbose                     prints progress if TRUE
+#' @param joint_estimation            estimates everything jointly if TRUE,
+#'                                    uses a 2 step procedure if FALSE
 #' @keywords internal
 #' @importFrom stats          sd
 #' @importFrom stats          optim
@@ -36,7 +38,7 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
                dataset, mean_estim = NULL, sd_estim = NULL,
                grid_size=100, parallelize = TRUE, ncores=8,
                adj_positions=1:nrow(adj_matrix), interaction_effects=list(),
-               init=NULL,verbose=TRUE){
+               init=NULL,verbose=TRUE, joint_estimation=FALSE){
 
   if(is.null(init)){
     ive_estim = ive(pairwise_covariate_matrices = pairwise_covariate_matrices,
@@ -55,6 +57,7 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
   init = forward_transform_param(init)
 
   num_observations = nrow(dataset)
+  dimension = ncol(dataset)
   # the SCE needs to be computed on the normalized dataset
   if(sum(is.na(dataset))==0){
     if(is.null(mean_estim)){
@@ -63,8 +66,12 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
     if(is.null(sd_estim)){
       sd_estim = apply(dataset,2, stats::sd)
     }
-    dataset = (dataset - t(matrix(rep(mean_estim,num_observations),
-                                  ncol=num_observations)))%*%diag(1/sd_estim)
+    # do not normalize if estimating jointly
+    if(!joint_estimation){
+      dataset = (dataset - t(matrix(rep(mean_estim,num_observations),
+                                    ncol=num_observations)))%*%diag(1/sd_estim)
+    }
+
   } else{
     if(is.null(mean_estim)){
       mean_estim = apply(dataset,2,function(x) mean(x[!is.na(x)]))
@@ -72,8 +79,12 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
     if(is.null(sd_estim)){
       sd_estim = apply(dataset,2,function(x) stats::sd(x[!is.na(x)]))
     }
-    dataset = sapply(seq_along(dataset[1,]),
-                     function(s) (dataset[,s] - mean_estim[s])/sd_estim[s])
+    # do not normalize if estimating jointly
+    if(!joint_estimation){
+      dataset = sapply(seq_along(dataset[1,]),
+                       function(s) (dataset[,s] - mean_estim[s])/sd_estim[s])
+    }
+
   }
 
   if((!is.null(pairwise_covariate_matrices))&
@@ -106,43 +117,76 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
     logParm=x,
     matList=matList,
     dataset=dataset,
-    interaction_effects=interaction_effects)
+    interaction_effects=interaction_effects,
+    joint_estimation=joint_estimation)
   GradLogLikLogParm = function(x) GradLogLikLogParm_02(
     adj_positions=adj_positions,
     logParm=x,
     matList=matList,
     dataset=dataset,
-    interaction_effects=interaction_effects)
-
-  logLikInit <- LogLikLogParm(init)
-  if(verbose){
-    fit3 <- try(stats::optim(par=init,
-                             fn=LogLikLogParm,
-                             gr=GradLogLikLogParm,
-                             control=list(fnscale=-1,
-                                          trace=1,
-                                          maxit=500),
-                             method='BFGS'))
+    interaction_effects=interaction_effects,
+    joint_estimation=joint_estimation)
+  if(joint_estimation){
+    logLikInit <- LogLikLogParm(c(mean_estim,log(sd_estim),init))
+    if(verbose){
+      fit3 <- try(stats::optim(par=c(mean_estim, log(sd_estim), init),
+                               fn=LogLikLogParm,
+                               gr=GradLogLikLogParm,
+                               control=list(fnscale=-1,
+                                            trace=1,
+                                            maxit=500),
+                               method='BFGS'))
+    } else{
+      fit3 <- try(stats::optim(par=c(mean_estim, log(sd_estim), init),
+                               fn=LogLikLogParm,
+                               gr=GradLogLikLogParm,
+                               control=list(fnscale=-1,
+                                            trace=0,
+                                            maxit=500),
+                               method='BFGS'))
+    }
+    if(!is.character(fit3[1])){
+      param_fit3 = backward_transform_param(fit3$par[-(1:(2*dimension))])
+      SigmaHat3 <- CovMat_03(adj_positions=adj_positions,
+                             parm=param_fit3,
+                             matList=matList,
+                             interaction_effects=interaction_effects)$Sigma
+    } else{
+      SigmaHat3 = NULL
+      param_fit3 = NULL
+    }
   } else{
-    fit3 <- try(stats::optim(par=init,
-                             fn=LogLikLogParm,
-                             gr=GradLogLikLogParm,
-                             control=list(fnscale=-1,
-                                          trace=0,
-                                          maxit=500),
-                             method='BFGS'))
+    logLikInit <- LogLikLogParm(init)
+    if(verbose){
+      fit3 <- try(stats::optim(par=init,#TODO REMOVE
+                               fn=LogLikLogParm,
+                               gr=GradLogLikLogParm,
+                               control=list(fnscale=-1,
+                                            trace=1,
+                                            maxit=500),
+                               method='BFGS'))
+    } else{
+      fit3 <- try(stats::optim(par=init,
+                               fn=LogLikLogParm,
+                               gr=GradLogLikLogParm,
+                               control=list(fnscale=-1,
+                                            trace=0,
+                                            maxit=500),
+                               method='BFGS'))
+    }
+    if(!is.character(fit3[1])){
+      SigmaHat3 <- CovMat_03(adj_positions=adj_positions,
+                             parm=backward_transform_param(fit3$par),
+                             matList=matList,
+                             interaction_effects=interaction_effects)$Sigma
+      param_fit3 = backward_transform_param(fit3$par)
+    } else{
+      SigmaHat3 = NULL
+      param_fit3 = NULL
+    }
   }
 
-  if(!is.character(fit3[1])){
-    SigmaHat3 <- CovMat_03(adj_positions=adj_positions,
-                           parm=backward_transform_param(fit3$par),
-                           matList=matList,
-                           interaction_effects=interaction_effects)$Sigma
-    param_fit3 = backward_transform_param(fit3$par)
-  } else{
-    SigmaHat3 = NULL
-    param_fit3 = NULL
-  }
+
 
   bic = -2*true_LogLikParm_02(adj_positions, param_fit3, matList, dataset,
                               interaction_effects=interaction_effects) +
@@ -160,7 +204,6 @@ sce = function(pairwise_covariate_matrices, adj_matrix,
   } else{
     names(param_fit3) = effect_names
   }
-
   corrmat_estim = SigmaHat3
   return(list(parm=param_fit3,
               average_effects = average_effects,

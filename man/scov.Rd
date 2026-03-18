@@ -6,8 +6,8 @@
 \usage{
 scov(
   pairwise_covariate_matrices,
-  adj_matrix,
   dataset,
+  adj_matrix = NULL,
   mean_estim = NULL,
   sd_estim = NULL,
   grid_size = 100,
@@ -21,15 +21,16 @@ scov(
   semiparametric = FALSE,
   misspecification = FALSE,
   seed = 0,
-  verbose = TRUE
+  verbose = TRUE,
+  joint_estimation = FALSE
 )
 }
 \arguments{
 \item{pairwise_covariate_matrices}{named list of square matrices}
 
-\item{adj_matrix}{adjacency matrix of the spatial covariate}
-
 \item{dataset}{the dataset given in matrix form}
+
+\item{adj_matrix}{adjacency matrix of the spatial covariate}
 
 \item{mean_estim}{mean vector estimate}
 
@@ -58,6 +59,9 @@ scov(
 \item{seed}{a seed (can't be set to NULL)}
 
 \item{verbose}{prints progress if TRUE}
+
+\item{joint_estimation}{estimates everything jointly if TRUE,
+uses a 2 step procedure if FALSE}
 }
 \value{
 Returns a named list with the following elements:
@@ -85,7 +89,7 @@ mean = rep(0,4)
 sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
 diag(sigma) = 1
 dataset = mvtnorm::rmvnorm(1000,mean=mean,sigma=sigma)
-scov(covar_mats, adj_matrix, dataset,
+scov(covar_mats, dataset, adj_matrix,
 interaction_effects=list(c("X1","X2")),
 parallelize=FALSE,ncores=1)
 }

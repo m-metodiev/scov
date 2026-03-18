@@ -9,7 +9,8 @@ GradLogLikLogParm_02(
   logParm,
   matList,
   dataset,
-  interaction_effects = list()
+  interaction_effects = list(),
+  joint_estimation = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,9 @@ GradLogLikLogParm_02(
 \item{dataset}{an n (observations) x d (dimensions) matrix}
 
 \item{interaction_effects}{list of interaction effects (vectors of names)}
+
+\item{joint_estimation}{estimates everything jointly if TRUE,
+uses a 2 step procedure if FALSE}
 }
 \value{
 the gradient of the function of the transformed parameter

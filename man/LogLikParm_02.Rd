@@ -9,7 +9,9 @@ LogLikParm_02(
   parm,
   matList,
   dataset,
-  interaction_effects = list()
+  interaction_effects = list(),
+  mus = NULL,
+  sigmas = NULL
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ LogLikParm_02(
 \item{dataset}{an n (observations) x d (dimension) matrix}
 
 \item{interaction_effects}{list of interaction effects (vectors of names)}
+
+\item{mus}{the mean parameters}
+
+\item{sigmas}{the standard deviation parameters}
 }
 \value{
 (a translation of) the loglikelihood
