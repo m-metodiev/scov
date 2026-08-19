@@ -2,13 +2,9 @@
 
 0 errors | 0 warnings | 0 note
 
-## New version
-This is a new version. In this version I have:
+## patch
+This is a patch. In this version I have:
 
-* replaced mclapply with future_lapply,
+* changed the vignette to that the .html output shows the code,
 
-* allowed the adjacency matrix to be set to NULL,
-
-* changed the order of the arguments in scov,
-
-* implemented the option joint_estimation=TRUE.
+* changed the referenced paper to the published 2026 version.

@@ -9,7 +9,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+#knitr::opts_chunk$set(echo = FALSE)
 library(mvtnorm)
 library(scov)
 ```
@@ -69,7 +69,7 @@ We simulate data from the standard normal distribution:
 mean = rep(0,4)
 sigma = 0.05*intercept+0.2*X1+0.2*X2+0.1*X2*X1+0.4*(diag(4) + adj_matrix)
 diag(sigma) = 1
-num_observations = 100
+num_observations = 1000
 dataset = mvtnorm::rmvnorm(num_observations,mean=mean,sigma=sigma)
 ```
 

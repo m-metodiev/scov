@@ -2,7 +2,7 @@ Package: scov
 Type: Package
 Title: Structured Covariances Estimators for Pairwise and Spatial Covariates
 Version: 2.0.0
-Date: 2026-03-18
+Date: 2026-08-19
 Authors@R: 
     c(person(given = "Martin",
     family = "Metodiev",
@@ -19,11 +19,11 @@ Authors@R:
     email = "stephane.robin@sorbonne-universite.fr"))
 Description: Implements estimators for structured covariance matrices in the
     presence of pairwise and spatial covariates.
-    Metodiev, Perrot-Dockès, Ouadah, Fosdick, Robin, Latouche & Raftery (2025)
-    <doi:10.48550/arXiv.2411.04520>.
+    Metodiev, Perrot-Dockès,
+    Ouadah, Fosdick, Robin, Latouche & Raftery (2026)
+    <doi:10.1214/26-AOAS2183>.
 License: GPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.3.2
 Imports: 
     Matrix,
     missMDA,
@@ -37,3 +37,4 @@ Imports:
     future.apply
 VignetteBuilder: knitr
 Suggests: knitr, markdown, corrplot
+Config/roxygen2/version: 8.1.0

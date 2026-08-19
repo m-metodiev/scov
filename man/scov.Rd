@@ -76,7 +76,7 @@ Returns a named list with the following elements:
 \description{
 This function computes the WSCE, SCE or IVE estimator for large covariances
 in the presence of pairwise and spatial covariates from
-Metodiev et al. (2024).
+Metodiev et al. (2026).
 }
 \examples{
 
@@ -94,8 +94,9 @@ interaction_effects=list(c("X1","X2")),
 parallelize=FALSE,ncores=1)
 }
 \references{
-Metodiev, M., Perrot-Dockès, M., Ouadah, S., Fosdick, B. K.,
-Robin, S., Latouche, P., & Raftery, A. E. (2024). A Structured Estimator for
-large Covariance Matrices in the Presence of Pairwise and Spatial Covariates.
-arXiv preprint arXiv:2411.04520.
+Martin Metodiev. Marie Perrot-Dockès. Sarah Ouadah.
+Bailey K. Fosdick. Stéphane Robin. Pierre Latouche. Adrian E. Raftery.
+"A structured estimator for large covariance matrices in the presence of
+pairwise and spatial covariates." Ann. Appl. Stat. 20 (2) 1736 - 1765,
+June 2026.
 }
