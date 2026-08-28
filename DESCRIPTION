@@ -1,7 +1,7 @@
 Package: scov
 Type: Package
 Title: Structured Covariances Estimators for Pairwise and Spatial Covariates
-Version: 2.0.1
+Version: 2.0.2
 Date: 2026-08-19
 Authors@R: 
     c(person(given = "Martin",

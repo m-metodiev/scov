@@ -1,3 +1,5 @@
+# scov 2.0.2
+
 # scov 2.0.1
 
 In this version I have:
